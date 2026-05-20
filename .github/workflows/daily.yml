@@ -1,0 +1,43 @@
+name: Daily AI News Digest
+
+on:
+  schedule:
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore posts database
+        uses: actions/cache@v4
+        with:
+          path: data/posts.db
+          key: posts-db-${{ github.run_id }}
+          restore-keys: |
+            posts-db-
+
+      - name: Run news bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          WRITER_BACKEND: ${{ vars.WRITER_BACKEND || 'openrouter' }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free' }}
+          MAX_POSTS_PER_RUN: ${{ vars.MAX_POSTS_PER_RUN || '8' }}
+          LOOKBACK_HOURS: ${{ vars.LOOKBACK_HOURS || '24' }}
+        run: python main.py
