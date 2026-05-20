@@ -1,9 +1,14 @@
-name: Daily AI News Digest
+name: AI News Live Feed
 
 on:
   schedule:
-    - cron: "0 15 * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
+
+# Не запускать новый run, если предыдущий ещё идёт
+concurrency:
+  group: ai-news-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -38,6 +43,6 @@ jobs:
           WRITER_BACKEND: ${{ vars.WRITER_BACKEND || 'openrouter' }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free' }}
-          MAX_POSTS_PER_RUN: ${{ vars.MAX_POSTS_PER_RUN || '8' }}
-          LOOKBACK_HOURS: ${{ vars.LOOKBACK_HOURS || '24' }}
+          MAX_POSTS_PER_RUN: ${{ vars.MAX_POSTS_PER_RUN || '5' }}
+          LOOKBACK_HOURS: ${{ vars.LOOKBACK_HOURS || '3' }}
         run: python main.py
